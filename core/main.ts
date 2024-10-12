@@ -6,33 +6,40 @@ if (window.Worker) {
 } else {
   console.log("Web Worker not supported");
 }
-
+const app = document.getElementById("app");
 const [g, s, sb] = createState("Hello World");
-
-const dEL = document.getElementById("data");
-const bEl = document.getElementById("btn");
-const cEl = document.createElement("div");
-cEl.textContent = "Child Element";
-
-function SendMessagetoWorker() {
-  worker.postMessage("Hi Worker");
-  console.log("Main script: Message posted to worker");
-  worker.onmessage = function (e) {
-    s(e.data);
+function main() {
+  if (!app) {
+    throw new Error("App element not found");
+  }
+  const button = renderElement(
+    document.createElement("button"),
+    { padding: "10px", cursor: "pointer" },
+    "Click me",
+    undefined,
+    { text: g() }
+  );
+  button.addEventListener("click", () => {
+    worker.postMessage({ type: "update", payload: g() });
+  });
+  const p = renderElement(document.createElement("p"), { color: "blue" }, g());
+  const w = renderElement(
+    document.createElement("p"),
+    { color: "blue" },
+    undefined,
+    [p, button]
+  );
+  app.appendChild(w);
+  worker.onmessage = (e) => {
+    if (e.data.type === "update") {
+      s(e.data.payload);
+    }
   };
-}
-const style = {
-  color: "pink",
-  "background-color": "black",
-  "max-width": "200px",
-};
-let variables = {
-  name: "osman",
-};
 
-function UpdateData() {
-  if (dEL) renderElement(dEL, style, `${g()} {{ name }}`, cEl, variables);
+  sb((v) => {
+    p.textContent = v;
+    button.textContent = `Click me`;
+  });
 }
-if (bEl) bEl.addEventListener("click", SendMessagetoWorker);
 
-sb(UpdateData);
+main();

@@ -6,6 +6,6 @@ onmessage = function (e) {
   if (result) {
     const wresult = "Hi Main Script! " + i;
     console.log("Posting message back to main script");
-    postMessage(wresult);
+    postMessage({ type: "update", payload: wresult });
   }
 };

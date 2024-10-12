@@ -108,43 +108,46 @@ var isProcessingPending = false;
 
 // core/renderer.ts
 function renderElement(el, style, content, children, variables) {
-  for (const [key, value] of Object.entries(style)) {
-    if (key in el.style) {
-      el.style.setProperty(key, value);
-    }
-  }
+  Object.assign(el.style, style);
   if (variables && content) {
     for (const [key, value] of Object.entries(variables)) {
       const regex = new RegExp(`{{\\s*${key}\\s*}}`, "g");
       content = content.replace(regex, value);
     }
   }
-  if (content && !children) {
-    el.innerHTML = content;
+  if (content) {
+    const pElement = document.createElement("p");
+    pElement.textContent = content;
+    el.appendChild(pElement);
   }
   if (children) {
-    if (Array.isArray(children)) {
-      for (const child of children) {
-        el.appendChild(child);
-      }
-    } else {
-      el.appendChild(children);
-    }
+    const appendChild = (child) => el.appendChild(child);
+    Array.isArray(children) ? children.forEach(appendChild) : appendChild(children);
   }
   return el;
 }
 
 // core/main.ts
-function SendMessagetoWorker() {
-  worker.postMessage("Hi Worker");
-  console.log("Main script: Message posted to worker");
-  worker.onmessage = function(e) {
-    s(e.data);
+function main() {
+  if (!app) {
+    throw new Error("App element not found");
+  }
+  const button = renderElement(document.createElement("button"), { padding: "10px", cursor: "pointer" }, "Click me", undefined, { text: g() });
+  button.addEventListener("click", () => {
+    worker.postMessage({ type: "update", payload: g() });
+  });
+  const p = renderElement(document.createElement("p"), { color: "blue" }, g());
+  const w = renderElement(document.createElement("p"), { color: "blue" }, undefined, [p, button]);
+  app.appendChild(w);
+  worker.onmessage = (e) => {
+    if (e.data.type === "update") {
+      s(e.data.payload);
+    }
   };
-}
-function UpdateData() {
-  if (dEL)
-    renderElement(dEL, style, `${g()} {{ name }}`, cEl, variables);
+  sb((v) => {
+    p.textContent = v;
+    button.textContent = `Click me`;
+  });
 }
 var worker;
 if (window.Worker) {
@@ -152,19 +155,6 @@ if (window.Worker) {
 } else {
   console.log("Web Worker not supported");
 }
+var app = document.getElementById("app");
 var [g, s, sb] = createState("Hello World");
-var dEL = document.getElementById("data");
-var bEl = document.getElementById("btn");
-var cEl = document.createElement("div");
-cEl.textContent = "Child Element";
-var style = {
-  color: "pink",
-  "background-color": "black",
-  "max-width": "200px"
-};
-var variables = {
-  name: "osman"
-};
-if (bEl)
-  bEl.addEventListener("click", SendMessagetoWorker);
-sb(UpdateData);
+main();

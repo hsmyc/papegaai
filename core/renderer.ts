@@ -1,37 +1,38 @@
-export default function renderElement(
+// create type of renderElement function
+
+type RenderElement = (
   el: HTMLElement,
-  style: Partial<CSSStyleDeclaration>,
+  style?: Partial<CSSStyleDeclaration>,
   content?: string,
   children?: HTMLElement | HTMLElement[],
   variables?: Record<string, string>
-): HTMLElement {
-  for (const [key, value] of Object.entries(style)) {
-    if (key in el.style) {
-      el.style.setProperty(key, value as string);
-    }
-  }
+) => HTMLElement;
+
+const RE: RenderElement = (el, style, content, children, variables) => {
+  Object.assign(el.style, style);
 
   if (variables && content) {
     for (const [key, value] of Object.entries(variables)) {
-      // Match {{key}} with optional spaces around the key
       const regex = new RegExp(`{{\\s*${key}\\s*}}`, "g");
       content = content.replace(regex, value);
     }
   }
 
-  if (content && !children) {
-    el.innerHTML = content;
+  if (content) {
+    const pElement = document.createElement("p");
+    pElement.textContent = content;
+    el.appendChild(pElement);
   }
 
   if (children) {
-    if (Array.isArray(children)) {
-      for (const child of children) {
-        el.appendChild(child);
-      }
-    } else {
-      el.appendChild(children);
-    }
+    const appendChild = (child: HTMLElement) => el.appendChild(child);
+
+    Array.isArray(children)
+      ? children.forEach(appendChild)
+      : appendChild(children);
   }
 
   return el;
-}
+};
+
+export default RE;
