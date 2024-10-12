@@ -7,38 +7,63 @@ if (window.Worker) {
   console.log("Web Worker not supported");
 }
 const app = document.getElementById("app");
-const [g, s, sb] = createState("Hello World");
+
+function Button(
+  hElement?: HTMLElement | HTMLElement[],
+  variables?: Record<string, string>
+) {
+  const button = renderElement(
+    document.createElement("button"),
+    "pf-b",
+    undefined,
+    {
+      padding: "0.5rem 1rem",
+      border: "1px solid #333",
+      borderRadius: "0.25rem",
+      backgroundColor: "pink",
+      color: "#333",
+      cursor: "pointer",
+    },
+    "Click me {{ name }}",
+    hElement,
+    variables
+  );
+  button.onclick = () => {
+    worker.postMessage("Hello Worker!");
+  };
+  return button;
+}
+
+function Container(hElement?: HTMLElement | HTMLElement[]) {
+  return renderElement(
+    document.createElement("div"),
+    "pf-c",
+    undefined,
+    {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "1rem",
+      backgroundColor: "#f4f",
+    },
+    undefined,
+    hElement
+  );
+}
+
 function main() {
+  const [g, s, sb] = createState("Hello World");
   if (!app) {
     throw new Error("App element not found");
   }
-  const button = renderElement(
-    document.createElement("button"),
-    { padding: "10px", cursor: "pointer" },
-    "Click me",
-    undefined,
-    { text: g() }
-  );
-  button.addEventListener("click", () => {
-    worker.postMessage({ type: "update", payload: g() });
-  });
-  const p = renderElement(document.createElement("p"), { color: "blue" }, g());
-  const w = renderElement(
-    document.createElement("p"),
-    { color: "blue" },
-    undefined,
-    [p, button]
-  );
-  app.appendChild(w);
   worker.onmessage = (e) => {
-    if (e.data.type === "update") {
-      s(e.data.payload);
-    }
+    s(e.data.payload);
   };
 
-  sb((v) => {
-    p.textContent = v;
-    button.textContent = `Click me`;
+  sb(() => {
+    app.innerHTML = "";
+    const container = Container([Button(undefined, { name: g() })]);
+    app.appendChild(container);
   });
 }
 

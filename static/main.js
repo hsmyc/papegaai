@@ -107,7 +107,10 @@ var pendingStates = new Set;
 var isProcessingPending = false;
 
 // core/renderer.ts
-function renderElement(el, style, content, children, variables) {
+var RE = (el, id, className, style, content, children, variables) => {
+  el.id = id;
+  if (className)
+    el.className = className;
   Object.assign(el.style, style);
   if (variables && content) {
     for (const [key, value] of Object.entries(variables)) {
@@ -125,28 +128,45 @@ function renderElement(el, style, content, children, variables) {
     Array.isArray(children) ? children.forEach(appendChild) : appendChild(children);
   }
   return el;
-}
+};
+var renderer_default = RE;
 
 // core/main.ts
+function Button(hElement, variables) {
+  const button = renderer_default(document.createElement("button"), "pf-b", undefined, {
+    padding: "0.5rem 1rem",
+    border: "1px solid #333",
+    borderRadius: "0.25rem",
+    backgroundColor: "pink",
+    color: "#333",
+    cursor: "pointer"
+  }, "Click me {{ name }}", hElement, variables);
+  button.onclick = () => {
+    worker.postMessage("Hello Worker!");
+  };
+  return button;
+}
+function Container(hElement) {
+  return renderer_default(document.createElement("div"), "pf-c", undefined, {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "1rem",
+    backgroundColor: "#f4f"
+  }, undefined, hElement);
+}
 function main() {
+  const [g, s, sb] = createState("Hello World");
   if (!app) {
     throw new Error("App element not found");
   }
-  const button = renderElement(document.createElement("button"), { padding: "10px", cursor: "pointer" }, "Click me", undefined, { text: g() });
-  button.addEventListener("click", () => {
-    worker.postMessage({ type: "update", payload: g() });
-  });
-  const p = renderElement(document.createElement("p"), { color: "blue" }, g());
-  const w = renderElement(document.createElement("p"), { color: "blue" }, undefined, [p, button]);
-  app.appendChild(w);
   worker.onmessage = (e) => {
-    if (e.data.type === "update") {
-      s(e.data.payload);
-    }
+    s(e.data.payload);
   };
-  sb((v) => {
-    p.textContent = v;
-    button.textContent = `Click me`;
+  sb(() => {
+    app.innerHTML = "";
+    const container = Container([Button(undefined, { name: g() })]);
+    app.appendChild(container);
   });
 }
 var worker;
@@ -156,5 +176,4 @@ if (window.Worker) {
   console.log("Web Worker not supported");
 }
 var app = document.getElementById("app");
-var [g, s, sb] = createState("Hello World");
 main();
