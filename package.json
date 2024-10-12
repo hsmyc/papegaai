@@ -1,0 +1,14 @@
+{
+  "name": "papegaai",
+  "module": "main.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@yucedev/kraai": "npm:@jsr/yucedev__kraai"
+  }
+}
