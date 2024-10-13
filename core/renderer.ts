@@ -11,7 +11,7 @@ type CreateElement = (
     style?: Partial<CSSStyleDeclaration>;
     content?: string | HTMLElement;
     children?: HTMLElement | HTMLElement[];
-    variables?: Record<string, string>;
+    variables?: Record<string, string | number | boolean>;
     events?: Partial<EventMap>;
     attributes?: Record<string, string>;
   }

@@ -38,10 +38,33 @@ function Button(
   return button;
 }
 
+function Title() {
+  const title = renderElement("h1", { id: "title", content: "Hello Titty" });
+  return title;
+}
+
 function Container(hElement?: HTMLElement | HTMLElement[]) {
+  const [c, s, sub] = createState(0);
+  const inButton = renderElement("button", {
+    id: "inButton",
+    events: {
+      click(this, event) {
+        console.log(c());
+        s(c() + 1);
+      },
+    },
+    content: "{{c}}",
+    variables: { c: c() },
+  });
+
+  const childrens = [
+    inButton,
+    ...(Array.isArray(hElement) ? hElement : [hElement]),
+  ];
+
   return renderElement("div", {
     id: "container",
-    children: hElement,
+    children: childrens as HTMLElement[],
     style: {
       display: "flex",
       justifyContent: "center",
@@ -63,8 +86,8 @@ function main() {
   const title = doc.getElementById("title");
   sb(() => {
     app.innerHTML = "";
-    const container = Container([Button(undefined, { name: g() })]);
-    if (title) container.insertBefore(title, container.firstChild);
+    const container = Container([Title(), Button(undefined, { name: g() })]);
+    if (title) container.insertBefore(title, container.children[1]);
     const t = container.querySelector("h1");
     app.appendChild(container);
   });

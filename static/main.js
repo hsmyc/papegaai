@@ -175,18 +175,35 @@ function Button(hElement, variables) {
         worker.postMessage("Hello Worker!");
         console.log(this.id);
         console.log(event);
-      },
-      keydown(event) {
-        console.log(event);
       }
     }
   });
   return button;
 }
+function Title() {
+  const title = renderer_default("h1", { id: "title", content: "Hello Titty" });
+  return title;
+}
 function Container(hElement) {
+  const [c, s, sub] = createState(0);
+  const inButton = renderer_default("button", {
+    id: "inButton",
+    events: {
+      click(event) {
+        console.log(c());
+        s(c() + 1);
+      }
+    },
+    content: "{{c}}",
+    variables: { c: c() }
+  });
+  const childrens = [
+    inButton,
+    ...Array.isArray(hElement) ? hElement : [hElement]
+  ];
   return renderer_default("div", {
     id: "container",
-    children: hElement,
+    children: childrens,
     style: {
       display: "flex",
       justifyContent: "center",
@@ -207,9 +224,9 @@ function main() {
   const title = doc.getElementById("title");
   sb(() => {
     app.innerHTML = "";
-    const container = Container([Button(undefined, { name: g() })]);
+    const container = Container([Title(), Button(undefined, { name: g() })]);
     if (title)
-      container.insertBefore(title, container.firstChild);
+      container.insertBefore(title, container.children[1]);
     const t = container.querySelector("h1");
     app.appendChild(container);
   });
