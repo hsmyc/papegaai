@@ -29,8 +29,6 @@ function Button(
     events: {
       click(this, event) {
         worker.postMessage("Hello Worker!");
-        console.log(this.id);
-        console.log(event);
       },
     },
   });
@@ -44,19 +42,24 @@ function Title() {
 }
 
 function Container(hElement?: HTMLElement | HTMLElement[]) {
-  const [c, s, sub] = createState(0);
+  const [c, s, sub] = createState(32);
+  let variables = { c: c(), p: "osman" };
   const inButton = renderElement("button", {
     id: "inButton",
     events: {
       click(this, event) {
-        console.log(c());
         s(c() + 1);
       },
     },
-    content: "{{c}}",
-    variables: { c: c() },
+    content: "{{c}} {{p}}",
+    variables,
   });
-
+  sub(() => {
+    const cSpan = inButton.querySelector('[data-variable="c"]');
+    if (cSpan) {
+      cSpan.textContent = c().toString();
+    }
+  });
   const childrens = [
     inButton,
     ...(Array.isArray(hElement) ? hElement : [hElement]),

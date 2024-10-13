@@ -110,17 +110,36 @@ var isProcessingPending = false;
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, (char) => {
+    const escapeChars = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    };
+    return escapeChars[char];
+  });
+}
 var CE = (tag, {
   id,
   className,
   style,
+  attributes,
   content,
   children,
   variables,
   events,
-  attributes
+  dataset
 } = {}) => {
   const el = document.createElement(tag);
+  if (!tag) {
+    throw new Error("Tag name is required to create an element.");
+  }
+  if (variables && typeof content !== "string") {
+    console.warn("Variables provided but content is not a string. Variables will be ignored.");
+  }
   if (id) {
     el.id = id;
   }
@@ -134,29 +153,51 @@ var CE = (tag, {
     for (const [key, value] of Object.entries(variables)) {
       const escapedKey = escapeRegExp(key);
       const regex = new RegExp(`{{\\s*${escapedKey}\\s*}}`, "g");
-      content = content.replace(regex, value);
+      content = content.replace(regex, `<span data-variable="${key}">${escapeHTML(String(value))}</span>`);
     }
   }
   if (content) {
     if (typeof content === "string") {
-      el.textContent = content;
+      el.innerHTML = content;
     } else if (content instanceof HTMLElement) {
-      el.appendChild(content);
+      const appendContent = (item) => {
+        if (typeof item === "string") {
+          el.appendChild(document.createTextNode(item));
+        } else {
+          el.appendChild(item);
+        }
+      };
+      if (Array.isArray(content)) {
+        content.forEach(appendContent);
+      } else {
+        appendContent(content);
+      }
     }
   }
   if (children) {
-    const appendChild = (child) => el.appendChild(child);
-    Array.isArray(children) ? children.forEach(appendChild) : appendChild(children);
+    const fragment = document.createDocumentFragment();
+    const appendChild = (child) => fragment.appendChild(child);
+    if (Array.isArray(children)) {
+      children.forEach(appendChild);
+    } else {
+      appendChild(children);
+    }
+    el.appendChild(fragment);
   }
   if (events) {
-    for (const [key, value] of Object.entries(events)) {
-      el.addEventListener(key, value);
+    for (const [eventName, eventHandler] of Object.entries(events)) {
+      if (eventHandler) {
+        el.addEventListener(eventName, eventHandler);
+      }
     }
   }
   if (attributes) {
-    for (const [attrName, attrValue] of Object.entries(attributes)) {
-      el.setAttribute(attrName, attrValue);
+    for (const [attr, value] of Object.entries(attributes)) {
+      el.setAttribute(attr, value);
     }
+  }
+  if (dataset) {
+    Object.assign(el.dataset, dataset);
   }
   return el;
 };
@@ -173,8 +214,6 @@ function Button(hElement, variables) {
     events: {
       click(event) {
         worker.postMessage("Hello Worker!");
-        console.log(this.id);
-        console.log(event);
       }
     }
   });
@@ -185,17 +224,23 @@ function Title() {
   return title;
 }
 function Container(hElement) {
-  const [c, s, sub] = createState(0);
+  const [c, s, sub] = createState(32);
+  let variables = { c: c(), p: "osman" };
   const inButton = renderer_default("button", {
     id: "inButton",
     events: {
       click(event) {
-        console.log(c());
         s(c() + 1);
       }
     },
-    content: "{{c}}",
-    variables: { c: c() }
+    content: "{{c}} {{p}}",
+    variables
+  });
+  sub(() => {
+    const cSpan = inButton.querySelector('[data-variable="c"]');
+    if (cSpan) {
+      cSpan.textContent = c().toString();
+    }
   });
   const childrens = [
     inButton,
