@@ -107,53 +107,94 @@ var pendingStates = new Set;
 var isProcessingPending = false;
 
 // core/renderer.ts
-var RE = (el, id, className, style, content, children, variables) => {
-  el.id = id;
-  if (className)
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+var CE = (tag, {
+  id,
+  className,
+  style,
+  content,
+  children,
+  variables,
+  events,
+  attributes
+} = {}) => {
+  const el = document.createElement(tag);
+  if (id) {
+    el.id = id;
+  }
+  if (className) {
     el.className = className;
-  Object.assign(el.style, style);
-  if (variables && content) {
+  }
+  if (style) {
+    Object.assign(el.style, style);
+  }
+  if (variables && typeof content === "string") {
     for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{{\\s*${key}\\s*}}`, "g");
+      const escapedKey = escapeRegExp(key);
+      const regex = new RegExp(`{{\\s*${escapedKey}\\s*}}`, "g");
       content = content.replace(regex, value);
     }
   }
   if (content) {
-    const pElement = document.createElement("p");
-    pElement.textContent = content;
-    el.appendChild(pElement);
+    if (typeof content === "string") {
+      el.textContent = content;
+    } else if (content instanceof HTMLElement) {
+      el.appendChild(content);
+    }
   }
   if (children) {
     const appendChild = (child) => el.appendChild(child);
     Array.isArray(children) ? children.forEach(appendChild) : appendChild(children);
   }
+  if (events) {
+    for (const [key, value] of Object.entries(events)) {
+      el.addEventListener(key, value);
+    }
+  }
+  if (attributes) {
+    for (const [attrName, attrValue] of Object.entries(attributes)) {
+      el.setAttribute(attrName, attrValue);
+    }
+  }
   return el;
 };
-var renderer_default = RE;
+var renderer_default = CE;
 
 // core/main.ts
 function Button(hElement, variables) {
-  const button = renderer_default(document.createElement("button"), "pf-b", undefined, {
-    padding: "0.5rem 1rem",
-    border: "1px solid #333",
-    borderRadius: "0.25rem",
-    backgroundColor: "pink",
-    color: "#333",
-    cursor: "pointer"
-  }, "Click me {{ name }}", hElement, variables);
-  button.onclick = () => {
-    worker.postMessage("Hello Worker!");
-  };
+  const button = renderer_default("button", {
+    id: "button",
+    className: "pf-m-primary",
+    content: "{{ name }}",
+    children: hElement,
+    variables,
+    events: {
+      click(event) {
+        worker.postMessage("Hello Worker!");
+        console.log(this.id);
+        console.log(event);
+      },
+      keydown(event) {
+        console.log(event);
+      }
+    }
+  });
   return button;
 }
 function Container(hElement) {
-  return renderer_default(document.createElement("div"), "pf-c", undefined, {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "1rem",
-    backgroundColor: "#f4f"
-  }, undefined, hElement);
+  return renderer_default("div", {
+    id: "container",
+    children: hElement,
+    style: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      flexDirection: "column",
+      gap: "1rem"
+    }
+  });
 }
 function main() {
   const [g, s, sb] = createState("Hello World");
@@ -163,9 +204,13 @@ function main() {
   worker.onmessage = (e) => {
     s(e.data.payload);
   };
+  const title = doc.getElementById("title");
   sb(() => {
     app.innerHTML = "";
     const container = Container([Button(undefined, { name: g() })]);
+    if (title)
+      container.insertBefore(title, container.firstChild);
+    const t = container.querySelector("h1");
     app.appendChild(container);
   });
 }
@@ -176,4 +221,9 @@ if (window.Worker) {
   console.log("Web Worker not supported");
 }
 var app = document.getElementById("app");
+var parser = new DOMParser;
+var doc = parser.parseFromString(`  <div id="new">
+    <h1 id="title">Hello World</h1>
+  </div>
+  `, "text/html");
 main();

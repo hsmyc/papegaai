@@ -7,48 +7,49 @@ if (window.Worker) {
   console.log("Web Worker not supported");
 }
 const app = document.getElementById("app");
+const parser = new DOMParser();
+const doc = parser.parseFromString(
+  `  <div id="new">
+    <h1 id="title">Hello World</h1>
+  </div>
+  `,
+  "text/html"
+);
 
 function Button(
   hElement?: HTMLElement | HTMLElement[],
   variables?: Record<string, string>
 ) {
-  const button = renderElement(
-    document.createElement("button"),
-    "pf-b",
-    undefined,
-    {
-      padding: "0.5rem 1rem",
-      border: "1px solid #333",
-      borderRadius: "0.25rem",
-      backgroundColor: "pink",
-      color: "#333",
-      cursor: "pointer",
+  const button = renderElement("button", {
+    id: "button",
+    className: "pf-m-primary",
+    content: "{{ name }}",
+    children: hElement,
+    variables,
+    events: {
+      click(this, event) {
+        worker.postMessage("Hello Worker!");
+        console.log(this.id);
+        console.log(event);
+      },
     },
-    "Click me {{ name }}",
-    hElement,
-    variables
-  );
-  button.onclick = () => {
-    worker.postMessage("Hello Worker!");
-  };
+  });
+
   return button;
 }
 
 function Container(hElement?: HTMLElement | HTMLElement[]) {
-  return renderElement(
-    document.createElement("div"),
-    "pf-c",
-    undefined,
-    {
+  return renderElement("div", {
+    id: "container",
+    children: hElement,
+    style: {
       display: "flex",
-      flexDirection: "column",
+      justifyContent: "center",
       alignItems: "center",
+      flexDirection: "column",
       gap: "1rem",
-      backgroundColor: "#f4f",
     },
-    undefined,
-    hElement
-  );
+  });
 }
 
 function main() {
@@ -59,10 +60,12 @@ function main() {
   worker.onmessage = (e) => {
     s(e.data.payload);
   };
-
+  const title = doc.getElementById("title");
   sb(() => {
     app.innerHTML = "";
     const container = Container([Button(undefined, { name: g() })]);
+    if (title) container.insertBefore(title, container.firstChild);
+    const t = container.querySelector("h1");
     app.appendChild(container);
   });
 }
