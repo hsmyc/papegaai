@@ -33,6 +33,7 @@ function escapeHTML(str: string): string {
     return escapeChars[char];
   });
 }
+
 const CE: CreateElement = (
   tag,
   {

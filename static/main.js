@@ -266,12 +266,9 @@ function main() {
   worker.onmessage = (e) => {
     s(e.data.payload);
   };
-  const title = doc.getElementById("title");
   sb(() => {
     app.innerHTML = "";
     const container = Container([Title(), Button(undefined, { name: g() })]);
-    if (title)
-      container.insertBefore(title, container.children[1]);
     const t = container.querySelector("h1");
     app.appendChild(container);
   });
@@ -283,9 +280,4 @@ if (window.Worker) {
   console.log("Web Worker not supported");
 }
 var app = document.getElementById("app");
-var parser = new DOMParser;
-var doc = parser.parseFromString(`  <div id="new">
-    <h1 id="title">Hello World</h1>
-  </div>
-  `, "text/html");
 main();

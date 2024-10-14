@@ -1,20 +1,15 @@
 import { createState } from "@yucedev/kraai";
 import renderElement from "./renderer";
+
 let worker: Worker;
+
 if (window.Worker) {
   worker = new Worker("worker.js");
 } else {
   console.log("Web Worker not supported");
 }
+
 const app = document.getElementById("app");
-const parser = new DOMParser();
-const doc = parser.parseFromString(
-  `  <div id="new">
-    <h1 id="title">Hello World</h1>
-  </div>
-  `,
-  "text/html"
-);
 
 function Button(
   hElement?: HTMLElement | HTMLElement[],
@@ -40,7 +35,6 @@ function Title() {
   const title = renderElement("h1", { id: "title", content: "Hello Titty" });
   return title;
 }
-
 function Container(hElement?: HTMLElement | HTMLElement[]) {
   const [c, s, sub] = createState(32);
   let variables = { c: c(), p: "osman" };
@@ -86,11 +80,10 @@ function main() {
   worker.onmessage = (e) => {
     s(e.data.payload);
   };
-  const title = doc.getElementById("title");
+
   sb(() => {
     app.innerHTML = "";
     const container = Container([Title(), Button(undefined, { name: g() })]);
-    if (title) container.insertBefore(title, container.children[1]);
     const t = container.querySelector("h1");
     app.appendChild(container);
   });
