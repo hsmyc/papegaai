@@ -1,17 +1,13 @@
 await Bun.build({
-  entrypoints: ["./core/main.ts", "./core/worker.ts"],
-  outdir: "./static",
+  entrypoints: ["./examples/main.ts"],
+  outdir: "./examples",
 });
-
 Bun.serve({
   static: {
-    "/": new Response(await Bun.file("./static/index.html").bytes(), {
+    "/": new Response(await Bun.file("./examples/index.html").bytes(), {
       headers: { "Content-Type": "text/html" },
     }),
-    "/main.js": new Response(await Bun.file("./static/main.js").bytes(), {
-      headers: { "Content-Type": "application/javascript" },
-    }),
-    "/worker.js": new Response(await Bun.file("./static/worker.js").bytes(), {
+    "/main.js": new Response(await Bun.file("./examples/main.js").bytes(), {
       headers: { "Content-Type": "application/javascript" },
     }),
   },

@@ -1,8 +1,10 @@
 {
   "name": "papegaai",
+  "description": "Functional DOM manipulation utility",
   "module": "main.ts",
   "type": "module",
   "devDependencies": {
+    "@happy-dom/global-registrator": "^15.7.4",
     "@types/bun": "latest"
   },
   "peerDependencies": {
