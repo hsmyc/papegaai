@@ -56,14 +56,12 @@ Or using deno:
 deno add jsr:@yucedev/papegaai
 ```
 
-Replace `@your-username/p` with the actual package name when published.
-
 ## Usage
 
 ### Importing the Module
 
 ```javascript
-import P from "@yucedev/papegaai"; // Adjust the import path based on your setup
+import P from "@yucedev/papegaai";
 ```
 
 ### Creating Elements
@@ -131,10 +129,10 @@ document.body.appendChild(fragment);
 
 ## TypeScript Support
 
-**P** is written in TypeScript and provides full type definitions out of the box, enhancing the developer experience with autocomplete and type checking.
+**Papegaai** is written in TypeScript and provides full type definitions out of the box, enhancing the developer experience with autocomplete and type checking.
 
 ```typescript
-import P from "@your-username/p";
+import P from "@yucedev/papegaai";
 
 const div: HTMLElement = P("div", "TypeScript is supported!");
 ```
@@ -266,4 +264,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-_Happy coding with **P**! Simplify your DOM manipulation and enjoy a cleaner, more functional approach to building web interfaces._
+_Happy coding with **Papegaai**! Simplify your DOM manipulation and enjoy a cleaner, more functional approach to building web interfaces._

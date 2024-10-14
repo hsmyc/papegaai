@@ -1,0 +1,8 @@
+{
+  "name": "@yucedev/papegaai",
+  "version": "0.1.0",
+  "exports": "./core/papegaai.ts",
+  "publish": {
+    "include": ["./core", "./README.md", "./LICENSE"]
+  }
+}
