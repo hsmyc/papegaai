@@ -32,7 +32,7 @@
 
 ## Installation
 
-You can install **P** via bun:
+You can install **Papegaai** via bun:
 
 ```bash
 bunx jsr add @yucedev/papegaai
